@@ -1,3 +1,4 @@
+// src/csv/validator.ts
 import type { CSVRow } from './types';
 
 export interface ValidationResult {
@@ -13,7 +14,7 @@ export const validateCSVData = (rows: CSVRow[]): ValidationResult => {
    const errors: string[] = [];
    const warnings: string[] = [];
 
-   if (rows.length === 0) {
+   if (!rows || rows.length === 0) {
       errors.push('CSV файл не содержит данных');
       return { isValid: false, errors, warnings };
    }
@@ -23,28 +24,38 @@ export const validateCSVData = (rows: CSVRow[]): ValidationResult => {
    }
 
    rows.forEach((row, index) => {
-      if (!row.customerId || row.customerId.toString().trim() === '') {
+      // 1. Проверка customerId (в файле C001, C002...)
+      if (!row.customerId || String(row.customerId).trim() === '') {
          errors.push(`Строка ${index + 2}: отсутствует customerId`);
       }
 
-      if (row.currentPrice === undefined || row.currentPrice <= 0) {
-         errors.push(`Строка ${index + 2}: невалидная цена (${row.currentPrice})`);
-      }
+      // 2. Превращаем строку в число для валидации цены
+      const price = Number(row.currentPrice);
 
-      if (row.currentPrice > 1000000) {
-         warnings.push(`Строка ${index + 2}: необычно высокая цена (${row.currentPrice})`);
+      if (isNaN(price) || price <= 0) {
+         errors.push(`Строка ${index + 2}: невалидная цена "${row.currentPrice}" (должна быть числом больше 0)`);
+      } else {
+         if (price > 1000000) {
+            warnings.push(`Строка ${index + 2}: необычно высокая цена (${price})`);
+         }
       }
    });
 
-   const prices = rows.map((r) => r.currentPrice);
-   const maxPrice = Math.max(...prices);
-   const minPrice = Math.min(...prices);
-   const ratio = maxPrice / minPrice;
+   // 3. Безопасный расчет разброса цен (только для валидных чисел)
+   const validPrices = rows
+      .map((r) => Number(r.currentPrice))
+      .filter((p) => !isNaN(p) && p > 0);
 
-   if (ratio > 100) {
-      warnings.push(
-         `Очень большой разброс цен (${minPrice.toFixed(2)} - ${maxPrice.toFixed(2)}). Проверьте валюту и единицы измерения.`
-      );
+   if (validPrices.length > 0) {
+      const maxPrice = Math.max(...validPrices);
+      const minPrice = Math.min(...validPrices);
+      const ratio = maxPrice / minPrice;
+
+      if (ratio > 100) {
+         warnings.push(
+            `Очень большой разброс цен (${minPrice.toFixed(2)} - ${maxPrice.toFixed(2)}). Проверьте валюту и единицы измерения.`
+         );
+      }
    }
 
    return {
@@ -61,21 +72,21 @@ export const validateFileFormat = (file: File): ValidationResult => {
    const errors: string[] = [];
    const warnings: string[] = [];
 
-   const validExtensions = ['.csv', '.xlsx', '.xls'];
+   const validExtensions = ['.csv']; // Для MVP оставим только CSV
    const fileName = file.name.toLowerCase();
    const hasValidExtension = validExtensions.some((ext) => fileName.endsWith(ext));
 
    if (!hasValidExtension) {
-      errors.push('Неподдерживаемый формат файла. Используйте CSV, XLSX или XLS.');
+      errors.push('Неподдерживаемый формат файла. Используйте CSV.');
    }
 
-   const maxSize = 10 * 1024 * 1024;
+   const maxSize = 10 * 1024 * 1024; // 10MB
    if (file.size > maxSize) {
       errors.push('Размер файла превышает 10MB');
    }
 
    if (file.size === 0) {
-      errors.push('Файл пуст');
+      errors.push('Выбранный файл пуст');
    }
 
    return {
