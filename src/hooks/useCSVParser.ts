@@ -1,9 +1,8 @@
+// src/hooks/useCSVParser.ts
 import { useState, useCallback } from 'react';
-// ИСПРАВЛЕНО: Удален неиспользуемый detectCSVDelimiter
 import { loadAndParseCSVFile } from '../csv/parser';
 import { analyzeCSVData } from '../csv/anomaly';
 import { validateCSVData } from '../csv/validator';
-// ИСПРАВЛЕНО: Удален неиспользуемый CSVRow и добавлен префикс type
 import type { CSVAnalysisResult, ParsedCSVData } from '../csv/types';
 
 export const useCSVParser = () => {
@@ -18,20 +17,35 @@ export const useCSVParser = () => {
 
       try {
          const parsed = await loadAndParseCSVFile(file);
-         setParsedData(parsed);
 
-         if (parsed.rows.length > 0) {
-            const validation = validateCSVData(parsed.rows);
-            if (!validation.isValid) {
-               setError(validation.errors.join('; '));
-               return;
-            }
-
-            const csvAnalysis = analyzeCSVData(parsed.rows);
-            setAnalysis(csvAnalysis);
+         if (parsed.rows.length === 0) {
+            throw new Error('Файл пуст');
          }
+
+         const validation = validateCSVData(parsed.rows);
+         if (!validation.isValid) {
+            const errorMsg = validation.errors.join('; ');
+            setError(errorMsg);
+            return { rows: [], analysis: null, errors: [errorMsg] };
+         }
+
+         const csvAnalysis = analyzeCSVData(parsed.rows);
+
+         // Обновляем локальное состояние хука
+         setParsedData(parsed);
+         setAnalysis(csvAnalysis);
+
+         // ВАЖНО: Возвращаем результат для компонента CSVUploader
+         return {
+            rows: parsed.rows,
+            analysis: csvAnalysis,
+            errors: []
+         };
+
       } catch (err) {
-         setError(err instanceof Error ? err.message : 'Ошибка парсинга файла');
+         const message = err instanceof Error ? err.message : 'Ошибка парсинга файла';
+         setError(message);
+         return { rows: [], analysis: null, errors: [message] };
       } finally {
          setIsLoading(false);
       }
