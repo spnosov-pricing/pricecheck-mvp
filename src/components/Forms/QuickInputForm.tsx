@@ -1,8 +1,10 @@
 // src/components/Forms/QuickInputForm.tsx
+
 import React, { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { usePricingCalculations } from '../../hooks/usePricingCalculations';
 import { useAppStore } from '../../store/appStore';
+import { Loader } from '../Common/Loader';
 
 interface QuickInputFormData {
    currentPrice: number;
@@ -31,6 +33,7 @@ export const QuickInputForm: React.FC = () => {
    const { setRevenueLiftResults, setQuickInputData } = useAppStore();
    const [isSubmitting, setIsSubmitting] = useState(false);
 
+   // Следим за изменениями для отображения % роста цены
    const currentPriceInput = watch('currentPrice');
    const newPriceInput = watch('newPrice');
    const priceChange = currentPriceInput > 0
@@ -39,6 +42,10 @@ export const QuickInputForm: React.FC = () => {
 
    const onSubmit = async (data: QuickInputFormData) => {
       setIsSubmitting(true);
+
+      // Имитируем небольшую задержку для визуализации лоадера (полезно для UX)
+      await new Promise(resolve => setTimeout(resolve, 800));
+
       try {
          const result = calculateRevenueLiftScenario(
             {
@@ -73,6 +80,7 @@ export const QuickInputForm: React.FC = () => {
          <h2 className="text-xl font-bold text-gray-800 mb-4">Симулятор выручки</h2>
 
          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {/* Текущая цена */}
             <div>
                <label className="block text-sm font-medium text-gray-700 mb-2">
                   Текущая цена (₽/мес)
@@ -84,6 +92,7 @@ export const QuickInputForm: React.FC = () => {
                />
             </div>
 
+            {/* Новая цена */}
             <div>
                <label className="block text-sm font-medium text-gray-700 mb-2">
                   Новая цена (₽/мес)
@@ -98,6 +107,7 @@ export const QuickInputForm: React.FC = () => {
                </p>
             </div>
 
+            {/* Клиенты */}
             <div>
                <label className="block text-sm font-medium text-gray-700 mb-2">
                   Количество клиентов
@@ -109,6 +119,7 @@ export const QuickInputForm: React.FC = () => {
                />
             </div>
 
+            {/* Churn */}
             <div>
                <label className="block text-sm font-medium text-gray-700 mb-2">
                   Месячный Churn (%)
@@ -121,6 +132,7 @@ export const QuickInputForm: React.FC = () => {
                />
             </div>
 
+            {/* Отрасль */}
             <div className="md:col-span-2">
                <label className="block text-sm font-medium text-gray-700 mb-2">
                   Отрасль (влияет на эластичность)
@@ -139,9 +151,16 @@ export const QuickInputForm: React.FC = () => {
          <button
             type="submit"
             disabled={isSubmitting}
-            className="w-full bg-blue-600 text-white py-3 rounded-lg font-bold hover:bg-blue-700 transition-all shadow-md disabled:bg-blue-300 active:scale-[0.98]"
+            className="w-full bg-blue-600 text-white py-3 rounded-lg font-bold hover:bg-blue-700 transition-all shadow-md disabled:bg-blue-300 active:scale-[0.98] flex items-center justify-center min-h-[52px]"
          >
-            {isSubmitting ? 'Выполняем расчет...' : 'Рассчитать Revenue Lift'}
+            {isSubmitting ? (
+               <div className="flex items-center gap-3">
+                  <Loader size="sm" />
+                  <span>Выполняем расчет...</span>
+               </div>
+            ) : (
+               'Рассчитать Revenue Lift'
+            )}
          </button>
       </form>
    );
