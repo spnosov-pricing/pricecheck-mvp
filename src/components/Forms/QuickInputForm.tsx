@@ -1,3 +1,4 @@
+// src/components/Forms/QuickInputForm.tsx
 import React, { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { usePricingCalculations } from '../../hooks/usePricingCalculations';
@@ -16,12 +17,12 @@ interface QuickInputFormData {
 export const QuickInputForm: React.FC = () => {
    const { register, handleSubmit, watch } = useForm<QuickInputFormData>({
       defaultValues: {
-         currentPrice: 99,
-         currentCustomers: 500,
-         customerAcquisitionCost: 500,
+         currentPrice: 5000,
+         currentCustomers: 100,
+         customerAcquisitionCost: 2000,
          averageContractLength: 12,
-         monthlyChurn: 5, // Значение в процентах
-         newPrice: 129,
+         monthlyChurn: 5,
+         newPrice: 6500,
          industry: 'saas',
       },
    });
@@ -30,7 +31,6 @@ export const QuickInputForm: React.FC = () => {
    const { setRevenueLiftResults, setQuickInputData } = useAppStore();
    const [isSubmitting, setIsSubmitting] = useState(false);
 
-   // Следим за изменениями цен для живого расчета процента
    const currentPriceInput = watch('currentPrice');
    const newPriceInput = watch('newPrice');
    const priceChange = currentPriceInput > 0
@@ -48,7 +48,6 @@ export const QuickInputForm: React.FC = () => {
                customerAcquisitionCost: Number(data.customerAcquisitionCost),
                averageContractLength: Number(data.averageContractLength),
                priceElasticity: -1.2,
-               // Исправлено: передаем в averageChurn значение из поля monthlyChurn
                averageChurn: Number(data.monthlyChurn),
             },
             data.industry
@@ -74,10 +73,9 @@ export const QuickInputForm: React.FC = () => {
          <h2 className="text-xl font-bold text-gray-800 mb-4">Симулятор выручки</h2>
 
          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {/* Текущая цена */}
             <div>
                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Текущая цена ($/мес)
+                  Текущая цена (₽/мес)
                </label>
                <input
                   type="number"
@@ -86,10 +84,9 @@ export const QuickInputForm: React.FC = () => {
                />
             </div>
 
-            {/* Новая цена */}
             <div>
                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Новая цена ($/мес)
+                  Новая цена (₽/мес)
                </label>
                <input
                   type="number"
@@ -97,11 +94,10 @@ export const QuickInputForm: React.FC = () => {
                   className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
                />
                <p className={`text-sm mt-1 font-semibold ${priceChange >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-                  {priceChange >= 0 ? '▲' : '▼'} {Math.abs(priceChange).toFixed(1)}% к цене
+                  {priceChange > 0 ? '+' : ''}{priceChange.toFixed(1)}% к цене
                </p>
             </div>
 
-            {/* Клиенты */}
             <div>
                <label className="block text-sm font-medium text-gray-700 mb-2">
                   Количество клиентов
@@ -113,7 +109,6 @@ export const QuickInputForm: React.FC = () => {
                />
             </div>
 
-            {/* Churn */}
             <div>
                <label className="block text-sm font-medium text-gray-700 mb-2">
                   Месячный Churn (%)
@@ -126,7 +121,6 @@ export const QuickInputForm: React.FC = () => {
                />
             </div>
 
-            {/* Отрасль */}
             <div className="md:col-span-2">
                <label className="block text-sm font-medium text-gray-700 mb-2">
                   Отрасль (влияет на эластичность)
