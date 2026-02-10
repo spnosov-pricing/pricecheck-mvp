@@ -1,65 +1,68 @@
+// src/App.tsx
 import { QuickInputForm } from './components/Forms/QuickInputForm';
+import { CSVUploader } from './components/Forms/CSVUploader';
 import { RevenueChart } from './components/Results/RevenueChart';
+import { AnomalyTable } from './components/Results/AnomalyTable';
 import { useAppStore } from './store/appStore';
 
 function App() {
   const { currentTab, setCurrentTab } = useAppStore();
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      {/* Навигация / Шапка */}
-      <header className="bg-white border-b border-gray-200">
+    <div className="min-h-screen bg-gray-50 text-gray-900 pb-20">
+      <header className="bg-white border-b border-gray-200 sticky top-0 z-10 shadow-sm">
         <div className="max-w-7xl mx-auto px-4 py-4 flex justify-between items-center">
-          <h1 className="text-2xl font-bold text-blue-600">PriceCheck MVP</h1>
-          <nav className="flex space-x-4">
+          <div className="flex items-center gap-2">
+            <div className="w-10 h-10 bg-blue-600 rounded-xl flex items-center justify-center text-white font-bold text-xl">₽</div>
+            <h1 className="text-2xl font-black tracking-tight text-gray-900">PriceCheck <span className="text-blue-600">MVP</span></h1>
+            {/* Добавленный бейдж PRO */}
+            <span className="ml-2 bg-amber-100 text-amber-700 text-[10px] font-black px-2 py-0.5 rounded-md uppercase tracking-tighter">PRO</span>
+          </div>
+          <nav className="flex bg-gray-100 p-1 rounded-xl border border-gray-200">
             <button
               onClick={() => setCurrentTab('quick-input')}
-              className={`px-3 py-2 rounded-md text-sm font-medium ${currentTab === 'quick-input' ? 'bg-blue-100 text-blue-700' : 'text-gray-500 hover:text-gray-700'}`}
+              className={`px-6 py-2 rounded-lg text-sm font-bold transition-all ${currentTab === 'quick-input' ? 'bg-white text-blue-600 shadow-md' : 'text-gray-500 hover:text-gray-700'}`}
             >
               Симулятор
             </button>
             <button
               onClick={() => setCurrentTab('csv-upload')}
-              className={`px-3 py-2 rounded-md text-sm font-medium ${currentTab === 'csv-upload' ? 'bg-blue-100 text-blue-700' : 'text-gray-500 hover:text-gray-700'}`}
+              className={`px-6 py-2 rounded-lg text-sm font-bold transition-all ${currentTab === 'csv-upload' ? 'bg-white text-blue-600 shadow-md' : 'text-gray-500 hover:text-gray-700'}`}
             >
-              Leakage Finder
+              Поиск утечек выручки
             </button>
           </nav>
         </div>
       </header>
 
-      {/* Основной контент */}
       <main className="max-w-7xl mx-auto px-4 py-8">
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-start">
 
-          {/* Левая колонка: Ввод данных */}
           <section className="space-y-6">
-            <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-100">
-              <h2 className="text-lg font-semibold mb-4">Входные данные</h2>
-              {currentTab === 'quick-input' ? (
-                <QuickInputForm />
-              ) : (
-                <div className="h-64 flex items-center justify-center border-2 border-dashed rounded-lg text-gray-400">
-                  Модуль загрузки CSV в разработке
-                </div>
+            <div className="bg-white p-8 rounded-3xl shadow-xl border border-gray-100">
+              <h2 className="text-xl font-black mb-6 flex items-center gap-3 text-gray-800 uppercase tracking-wider">
+                {currentTab === 'quick-input' ? '📝 Параметры бизнеса' : '📁 Загрузка базы клиентов'}
+              </h2>
+              {currentTab === 'quick-input' ? <QuickInputForm /> : (
+                <>
+                  <CSVUploader />
+                  <AnomalyTable />
+                </>
               )}
             </div>
           </section>
 
-          {/* Правая колонка: Результаты */}
-          <section className="space-y-6">
+          <section className="space-y-6 lg:sticky lg:top-28">
             <RevenueChart />
-
-            {/* Дополнительная карточка с подсказкой */}
-            <div className="bg-gradient-to-br from-blue-600 to-indigo-700 p-6 rounded-lg text-white shadow-lg">
-              <h3 className="text-lg font-bold mb-2">Как это работает?</h3>
-              <p className="text-blue-100 text-sm">
-                Мы используем модели эластичности спроса, специфичные для вашей отрасли,
-                чтобы предсказать потенциальный отток клиентов при изменении цены.
+            <div className="bg-gradient-to-br from-blue-700 via-blue-600 to-indigo-800 p-8 rounded-3xl text-white shadow-2xl relative overflow-hidden">
+              <div className="absolute top-0 right-0 p-4 opacity-10 text-6xl">📈</div>
+              <h3 className="text-xl font-black mb-3 flex items-center gap-2">Алгоритм анализа</h3>
+              <p className="text-blue-50 leading-relaxed font-medium">
+                Система находит клиентов, которые платят ниже рыночной (медианной) цены вашей компании.
+                Мы рассчитываем «упущенную выгоду» и показываем, сколько вы заработаете при индексации цен до нормы.
               </p>
             </div>
           </section>
-
         </div>
       </main>
     </div>
