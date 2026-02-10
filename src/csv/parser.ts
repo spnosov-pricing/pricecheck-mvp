@@ -1,17 +1,28 @@
+// src/csv/parser.ts
 import type { ParsedCSVData, CSVRow } from './types';
 
-export const loadAndParseCSVFile = async (file: File): Promise<ParsedCSVData> => {
+export const loadAndParseCSVFile = async (
+   file: File
+): Promise<ParsedCSVData> => {
    const text = await file.text();
-   const cleanText = text.replace(/^\uFEFF/, '').trim();
+   const cleanText = text.replace(/^uFEFF/, '').trim();
 
    if (!cleanText) throw new Error('Файл пуст');
 
-   const lines = cleanText.split(/\r?\n/).map(l => l.trim()).filter(Boolean);
+   const lines = cleanText
+      .split(/\r?\n/)
+      .map((l) => l.trim())
+      .filter(Boolean);
+
    const delimiter = lines[0].includes(';') ? ';' : ',';
-   const headers = lines[0].split(delimiter).map(h => h.trim().replace(/^["']|["']$/g, ''));
+   const headers = lines[0]
+      .split(delimiter)
+      .map((h) => h.trim().replace(/^["']|["']$/g, ''));
 
    const rows: CSVRow[] = lines.slice(1).map((line) => {
-      const values = line.split(delimiter).map(v => v.trim().replace(/^["']|["']$/g, ''));
+      const values = line
+         .split(delimiter)
+         .map((v) => v.trim().replace(/^["']|["']$/g, ''));
       const row: any = {};
 
       headers.forEach((header, index) => {
@@ -30,6 +41,6 @@ export const loadAndParseCSVFile = async (file: File): Promise<ParsedCSVData> =>
       rows,
       totalRows: rows.length,
       validRows: rows.length,
-      errors: []
+      errors: [],
    };
 };

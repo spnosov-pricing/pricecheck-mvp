@@ -2,8 +2,6 @@
 import React, { useState } from 'react';
 import { useAppStore } from '../../store/appStore';
 import { PaywallModal } from './PaywallModal';
-// Импортируем тип аномалии для устранения ошибок типизации
-import type { AnomalyData } from '../../csv/types';
 
 export const AnomalyTable: React.FC = () => {
    const { csvAnalysis } = useAppStore();
@@ -12,7 +10,11 @@ export const AnomalyTable: React.FC = () => {
    if (!csvAnalysis || csvAnalysis.anomalies.length === 0) return null;
 
    const formatCurrency = (val: number) =>
-      new Intl.NumberFormat('ru-RU', { style: 'currency', currency: 'RUB', maximumFractionDigits: 0 }).format(val);
+      new Intl.NumberFormat('ru-RU', {
+         style: 'currency',
+         currency: 'RUB',
+         maximumFractionDigits: 0,
+      }).format(val);
 
    return (
       <div className="bg-white rounded-2xl shadow-lg border border-gray-100 overflow-hidden mt-6">
@@ -24,7 +26,11 @@ export const AnomalyTable: React.FC = () => {
                   <span>⚠️</span> Найдено аномалий: {csvAnalysis.anomalyCount}
                </h3>
                <p className="text-sm text-red-600 mt-1">
-                  Общий потенциал: <span className="font-bold">{formatCurrency(csvAnalysis.potentialRecoveryTotal)}</span> в год
+                  Общий потенциал:{' '}
+                  <span className="font-bold">
+                     {formatCurrency(csvAnalysis.potentialRecoveryTotal)}
+                  </span>{' '}
+                  в год
                </p>
             </div>
             <button
@@ -46,14 +52,21 @@ export const AnomalyTable: React.FC = () => {
                   </tr>
                </thead>
                <tbody className="divide-y divide-gray-100">
-                  {/* Явно указываем типы для anomaly и idx */}
-                  {csvAnalysis.anomalies.slice(0, 5).map((anomaly: AnomalyData, idx: number) => (
+                  {csvAnalysis.anomalies.slice(0, 5).map((anomaly, idx) => (
                      <tr key={idx} className="hover:bg-gray-50 transition-colors">
-                        <td className="px-6 py-4 font-medium text-gray-900">{anomaly.customerName}</td>
-                        <td className="px-6 py-4">{formatCurrency(anomaly.currentPrice)}</td>
+                        <td className="px-6 py-4 font-medium text-gray-900">
+                           {anomaly.customerName}
+                        </td>
                         <td className="px-6 py-4">
-                           <span className={`px-2 py-1 rounded-full text-xs font-bold ${anomaly.severity === 'high' ? 'bg-red-100 text-red-700' : 'bg-orange-100 text-orange-700'
-                              }`}>
+                           {formatCurrency(anomaly.currentPrice)}
+                        </td>
+                        <td className="px-6 py-4">
+                           <span
+                              className={`px-2 py-1 rounded-full text-xs font-bold ${anomaly.severity === 'high'
+                                    ? 'bg-red-100 text-red-700'
+                                    : 'bg-orange-100 text-orange-700'
+                                 }`}
+                           >
                               -{anomaly.deviationPercent.toFixed(0)}%
                            </span>
                         </td>
@@ -64,17 +77,18 @@ export const AnomalyTable: React.FC = () => {
                   ))}
                </tbody>
             </table>
-            {csvAnalysis.anomalies.length > 5 && (
-               <div className="p-4 bg-gray-50 text-center border-t border-gray-100">
-                  <button
-                     onClick={() => setShowPaywall(true)}
-                     className="text-blue-600 font-bold text-xs hover:underline uppercase tracking-widest"
-                  >
-                     Показать еще {csvAnalysis.anomalies.length - 5} аномалий
-                  </button>
-               </div>
-            )}
          </div>
+
+         {csvAnalysis.anomalies.length > 5 && (
+            <div className="p-4 bg-gray-50 text-center border-t border-gray-100">
+               <button
+                  onClick={() => setShowPaywall(true)}
+                  className="text-blue-600 font-bold text-xs hover:underline uppercase tracking-widest"
+               >
+                  Показать еще {csvAnalysis.anomalies.length - 5} аномалий
+               </button>
+            </div>
+         )}
       </div>
    );
 };

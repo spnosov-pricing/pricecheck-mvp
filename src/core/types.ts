@@ -1,7 +1,8 @@
 // src/core/types.ts
 
-// --- Базовые типы стратегий ---
-
+/**
+ * ========== PRICING PLAYBOOKS ==========
+ */
 export interface PricingTier {
    name: string;
    features: string[];
@@ -9,15 +10,11 @@ export interface PricingTier {
    targetCustomer: string;
 }
 
-// ИСПРАВЛЕНО: Добавлен экспорт PlaybookTip (устраняет ошибку ts2305 на скриншоте)
 export interface PlaybookTip {
    category: string;
    advice: string;
    source: 'McKinsey' | 'Bain' | 'BCG';
 }
-
-// Типы моделей прайсинга
-export type PricingModel = 'subscription' | 'usage-based' | 'value-based' | 'hybrid' | 'flat_fee' | 'per_seat';
 
 export interface PricingPlaybook {
    id: string;
@@ -25,20 +22,29 @@ export interface PricingPlaybook {
    title: string;
    description: string;
    recommendedTiers: PricingTier[];
-   // ИСПРАВЛЕНО: Добавлено поле strategicTips (устраняет ошибку ts2353 на скриншоте)
    strategicTips: PlaybookTip[];
-   pricingModel: PricingModel;
+   pricingModel: 'subscription' | 'usage-based' | 'value-based' | 'hybrid';
 }
 
-// --- Типы для расчетов и симулятора ---
+/**
+ * ========== ELASTICITY MODELS ==========
+ */
+export interface ElasticityModel {
+   industry: string;
+   priceElasticity: number;
+   demandCurve: (price: number) => number;
+}
 
+/**
+ * ========== PRICING SCENARIOS & RESULTS ==========
+ */
 export interface PricingScenario {
    currentPrice: number;
    newPrice: number;
    currentCustomers: number;
    customerAcquisitionCost: number;
    averageContractLength: number;
-   priceElasticity: number;
+   priceElasticity?: number;
    averageChurn: number;
 }
 
@@ -50,25 +56,48 @@ export interface RevenueLiftResult {
    customerChurnImpact: number;
    netGain: number;
    breakEvenCustomers: number;
-   netProfitImpact: number;
+   netProfitImpact?: number;
 }
 
-export interface CalculationResults {
-   currentAnnualRevenue: number;
-   newAnnualRevenue: number;
-   revenueLift: number;
-   revenueLiftPercent: number;
-   suggestedPrice?: number;
-   adjustmentPercentage?: number;
+/**
+ * ========== PRICING DATA & REPORTS ==========
+ */
+export interface PricingData {
+   currentPrice: number;
+   currentCustomers?: number;
+   customerAcquisitionCost?: number;
+   averageContractLength?: number;
+   currency?: string;
+   lastUpdateDate: Date;
 }
 
-export interface ElasticityModel {
-   industry: string;
-   priceElasticity: number;
-   demandCurve: (price: number) => number;
+export interface ReportData {
+   brandName: string;
+   currentPricing: {
+      price: number;
+      currency: string;
+      lastUpdate: Date;
+   };
+   recommendedPricing: {
+      price: number;
+      adjustmentReason: string;
+      inflationImpact: number;
+   };
+   selectedPlaybook?: PricingPlaybook;
+   comparisonChart: {
+      competitors: Array<{
+         name: string;
+         price: number;
+         features: string[];
+      }>;
+   };
+   generatedDate: Date;
 }
 
-// --- Типы для LTV ---
+/**
+ * ========== LTV MODELS ==========
+ */
+export type PricingModel = 'flat_fee' | 'per_seat' | 'usage_based';
 
 export interface LTVProjection {
    model: PricingModel;
@@ -79,55 +108,11 @@ export interface LTVProjection {
    paybackPeriod: number;
 }
 
-// --- Типы для CSV аналитики ---
-
-export interface AnomalyData {
-   rowIndex: number;
-   customerId: string;
-   customerName: string;
-   currentPrice: number;
-   expectedPrice: number;
-   medianPrice: number;
-   priceDeviation: number;
-   deviationPercent: number;
-   severity: 'low' | 'medium' | 'high';
-   potentialRecovery: number;
-}
-
-export interface CSVAnalysisResult {
-   totalCustomers: number;
-   totalMRR: number;
-   totalARR: number;
-   medianPrice: number;
-   averagePrice: number;
-   anomalies: AnomalyData[];
-   anomalyCount: number;
-   potentialRecoveryTotal: number;
-}
-
-export interface CSVRow {
-   customerId: string;
-   customerName: string;
-   currentPrice: number;
-   monthlyChurn: number;
-   contractStartDate: string;
-   [key: string]: any;
-}
-
-// --- Общие данные ---
-
-export interface PricingData {
-   currentPrice: number;
-   customers: number;
-   currency: string;
-   lastUpdateDate: Date;
-}
-
-export interface ReportData {
-   brandName: string;
-   currentPricing: { price: number; currency: string; lastUpdate: Date };
-   recommendedPricing: { price: number; adjustmentReason: string; inflationImpact: number };
-   selectedPlaybook?: PricingPlaybook;
-   comparisonChart: { competitors: Array<{ name: string; price: number; features: string[] }>; };
-   generatedDate: Date;
+/**
+ * ========== INFLATION ADJUSTMENT ==========
+ */
+export interface InflationAdjustment {
+   suggestedPrice: number;
+   adjustmentPercentage: number;
+   reasoning: string;
 }

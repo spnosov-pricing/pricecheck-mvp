@@ -1,3 +1,4 @@
+// src/core/elasticity.ts
 import type { ElasticityModel } from './types';
 
 /**
@@ -54,7 +55,7 @@ export const selectElasticityModel = (
    industry: 'saas' | 'agency' | 'infrastructure',
    competitiveness: 'low' | 'medium' | 'high'
 ): ElasticityModel => {
-   // ИСПРАВЛЕНО: Правильное формирование ключа через шаблонную строку
+   // ИСПОЛЬЗУЕМ ОБРАТНЫЕ КАВЫЧКИ (БЭКТИКИ)
    const key = `${industry}_${competitiveness}`;
    return ELASTICITY_MODELS[key] || ELASTICITY_MODELS['saas_medium'];
 };

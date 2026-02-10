@@ -1,3 +1,4 @@
+// src/hooks/usePricingCalculations.ts
 import { useState, useCallback } from 'react';
 import { calculateRevenueLift, findOptimalPrice } from '../core/pricing';
 import { selectElasticityModel } from '../core/elasticity';
@@ -8,7 +9,10 @@ export const usePricingCalculations = () => {
    const [isCalculating, setIsCalculating] = useState(false);
 
    const calculateRevenueLiftScenario = useCallback(
-      (scenario: PricingScenario, industry: 'saas' | 'agency' | 'infrastructure') => {
+      (
+         scenario: PricingScenario,
+         industry: 'saas' | 'agency' | 'infrastructure'
+      ): RevenueLiftResult => {
          setIsCalculating(true);
          try {
             const elasticityModel = selectElasticityModel(industry, 'medium');
@@ -28,7 +32,7 @@ export const usePricingCalculations = () => {
          customers: number,
          elasticity: number,
          range?: { min: number; max: number }
-      ) => {
+      ): { optimalPrice: number; maxRevenue: number } => {
          setIsCalculating(true);
          try {
             const result = findOptimalPrice(basePrice, customers, elasticity, range);

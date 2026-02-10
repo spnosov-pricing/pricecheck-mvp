@@ -1,36 +1,75 @@
+// src/store/appStore.ts
 import { create } from 'zustand';
-import type { RevenueLiftResult, PricingData, CSVAnalysisResult, CSVRow, PricingPlaybook } from '../core/types';
-
-interface AppState {
-   currentTab: string;
-   setCurrentTab: (tab: string) => void;
-   quickInputData: any | null;
-   setQuickInputData: (data: any) => void;
-   revenueLiftResults: RevenueLiftResult | null;
-   setRevenueLiftResults: (results: RevenueLiftResult) => void;
-   csvData: CSVRow[] | null;
-   setCSVData: (data: CSVRow[]) => void;
-   csvAnalysis: CSVAnalysisResult | null;
-   setCSVAnalysis: (analysis: CSVAnalysisResult) => void;
-   selectedPlaybook: PricingPlaybook | null;
-   setSelectedPlaybook: (p: PricingPlaybook | null) => void;
-   inflationSector: string;
-   inflationRegion: string;
-}
+import type { AppState } from './types';
+import type {
+   PricingData,
+   RevenueLiftResult,
+   PricingPlaybook,
+   InflationAdjustment,
+   LTVProjection,
+} from '../core/types';
+import type { CSVRow, CSVAnalysisResult } from '../csv/types';
 
 export const useAppStore = create<AppState>((set) => ({
-   currentTab: 'quick-input',
-   setCurrentTab: (tab) => set({ currentTab: tab }),
+   // ========== Инициализация состояния ==========
    quickInputData: null,
-   setQuickInputData: (data) => set({ quickInputData: data }),
-   revenueLiftResults: null,
-   setRevenueLiftResults: (results) => set({ revenueLiftResults: results }),
    csvData: null,
-   setCSVData: (data) => set({ csvData: data }),
    csvAnalysis: null,
-   setCSVAnalysis: (analysis) => set({ csvAnalysis: analysis }),
+   revenueLiftResults: null,
+   inflationImpact: null,
+   ltvProjection: null,
+   currentTab: 'quick-input',
+   isLoading: false,
+   error: null,
    selectedPlaybook: null,
-   setSelectedPlaybook: (p) => set({ selectedPlaybook: p }),
-   inflationSector: 'Technology',
-   inflationRegion: 'RU',
+   inflationSector: 'IT Services',
+   inflationRegion: 'US',
+
+   // ========== Методы управления данными ==========
+   setQuickInputData: (data: PricingData | null) =>
+      set({ quickInputData: data }),
+
+   setCSVData: (data: CSVRow[] | null) =>
+      set({ csvData: data }),
+   setCSVAnalysis: (analysis: CSVAnalysisResult | null) =>
+      set({ csvAnalysis: analysis }),
+
+   setRevenueLiftResults: (results: RevenueLiftResult | null) =>
+      set({ revenueLiftResults: results }),
+
+   setInflationImpact: (impact: InflationAdjustment | null) =>
+      set({ inflationImpact: impact }),
+
+   setLTVProjection: (projection: LTVProjection | null) =>
+      set({ ltvProjection: projection }),
+
+   // ========== Методы управления UI ==========
+   setCurrentTab: (tab: string) =>
+      set({ currentTab: tab }),
+
+   setLoading: (loading: boolean) =>
+      set({ isLoading: loading }),
+
+   setError: (error: string | null) =>
+      set({ error }),
+
+   // ========== Методы управления плейбуками ==========
+   setSelectedPlaybook: (playbook: PricingPlaybook | null) =>
+      set({ selectedPlaybook: playbook }),
+
+   setInflationSettings: (sector: string, region: string) =>
+      set({ inflationSector: sector, inflationRegion: region }),
+
+   // ========== Сброс состояния ==========
+   reset: () =>
+      set({
+         quickInputData: null,
+         csvData: null,
+         csvAnalysis: null,
+         revenueLiftResults: null,
+         inflationImpact: null,
+         ltvProjection: null,
+         selectedPlaybook: null,
+         error: null,
+      }),
 }));

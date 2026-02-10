@@ -13,46 +13,60 @@ export const calculateRevenueLift = (
       newPrice,
       currentCustomers,
       averageChurn,
-      customerAcquisitionCost
+      customerAcquisitionCost,
    } = scenario;
 
    const priceChangePercent = (newPrice - currentPrice) / currentPrice;
 
-   // Расчет эластичности (потеря спроса)
-   const customerLossPercent = Math.abs(priceChangePercent * elasticityModel.priceElasticity);
+   // Расчет эластичности спроса
+   const customerLossPercent = Math.abs(
+      priceChangePercent * elasticityModel.priceElasticity
+   );
 
-   // Учитываем базовый отток и потерю от изменения цены
-   const totalChurn = (averageChurn / 100 / 12) + customerLossPercent;
-   const newCustomerCount = Math.max(currentCustomers * (1 - totalChurn), currentCustomers * 0.5);
+   // Учитываем базовый месячный отток и потерю от изменения цены
+   const totalChurn = averageChurn / 100 / 12 + customerLossPercent;
+   const newCustomerCount = Math.max(
+      currentCustomers * (1 - totalChurn),
+      currentCustomers * 0.5
+   );
 
+   // Валовая выручка (Annual Revenue)
    const currentAnnualRevenue = currentPrice * currentCustomers * 12;
    const newAnnualRevenue = newPrice * newCustomerCount * 12;
 
-   const revenueLift = newAnnualRevenue - currentAnnualRevenue;
+   // Учет затрат на привлечение (CAC)
+   const currentTotalCAC = currentCustomers * customerAcquisitionCost;
+   const newTotalCAC = newCustomerCount * customerAcquisitionCost;
 
-   // Экономия на CAC при уменьшении базы (если есть отток)
-   const savedCAC = (currentCustomers - newCustomerCount) * customerAcquisitionCost;
+   const revenueLift = newAnnualRevenue - currentAnnualRevenue;
 
    return {
       currentAnnualRevenue,
       newAnnualRevenue,
       revenueLift,
-      revenueLiftPercent: currentAnnualRevenue > 0 ? (revenueLift / currentAnnualRevenue) * 100 : 0,
+      revenueLiftPercent:
+         currentAnnualRevenue > 0
+            ? (revenueLift / currentAnnualRevenue) * 100
+            : 0,
       customerChurnImpact: currentCustomers - newCustomerCount,
       netGain: revenueLift > 0 ? revenueLift : 0,
       breakEvenCustomers: currentAnnualRevenue / (newPrice * 12),
-      netProfitImpact: revenueLift + savedCAC
+      netProfitImpact:
+         newAnnualRevenue - newTotalCAC - (currentAnnualRevenue - currentTotalCAC),
    };
 };
 
 /**
- * Расчет оптимальной цены (то, чего не хватало)
+ * Расчет оптимальной цены
  */
 export const findOptimalPrice = (
    basePrice: number,
    currentCustomers: number,
    priceElasticity: number,
-   priceRange: { min: number; max: number } = { min: basePrice * 0.5, max: basePrice * 2 }
+   priceRange: { min: number; max: number } = {
+      min: basePrice * 0.5,
+      max: basePrice * 2,
+   }
 ): { optimalPrice: number; maxRevenue: number } => {
    let maxRevenue = 0;
    let optimalPrice = basePrice;
@@ -80,5 +94,7 @@ export const compareScenarios = (
    scenarios: PricingScenario[],
    elasticityModel: ElasticityModel
 ): RevenueLiftResult[] => {
-   return scenarios.map((scenario) => calculateRevenueLift(scenario, elasticityModel));
+   return scenarios.map((scenario) =>
+      calculateRevenueLift(scenario, elasticityModel)
+   );
 };

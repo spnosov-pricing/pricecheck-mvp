@@ -1,3 +1,4 @@
+// src/components/Results/ExportSection.tsx
 import React from 'react';
 import type { ReportData } from '../../core/types';
 
@@ -6,7 +7,10 @@ interface ExportSectionProps {
    isPremium: boolean;
 }
 
-export const ExportSection: React.FC<ExportSectionProps> = ({ reportData, isPremium }) => {
+export const ExportSection: React.FC<ExportSectionProps> = ({
+   reportData,
+   isPremium,
+}) => {
    return (
       <div className="bg-blue-600 p-8 rounded-3xl text-white shadow-xl flex justify-between items-center">
          <div>
@@ -25,5 +29,3 @@ export const ExportSection: React.FC<ExportSectionProps> = ({ reportData, isPrem
       </div>
    );
 };
-
-export default ExportSection;
