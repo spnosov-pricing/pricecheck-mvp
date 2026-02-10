@@ -1,9 +1,10 @@
 // src/App.tsx
-import { useState } from 'react'; // ИСПРАВЛЕНО: Убрали лишний React
+import { useState } from 'react';
 import { QuickInputForm } from './components/Forms/QuickInputForm';
 import { CSVUploader } from './components/Forms/CSVUploader';
 import { RevenueChart } from './components/Results/RevenueChart';
 import { AnomalyTable } from './components/Results/AnomalyTable';
+import { ValuePropTester } from './components/Forms/ValuePropTester'; // Новый импорт
 import { useAppStore } from './store/appStore';
 import { DiagnosticQuiz } from './components/Quiz/DiagnosticQuiz';
 
@@ -24,18 +25,24 @@ function App() {
 
           {/* Навигация скрыта до завершения диагностики */}
           {isDiagnosed && (
-            <nav className="flex bg-gray-100 p-1 rounded-xl border border-gray-200">
+            <nav className="flex bg-gray-100 p-1 rounded-xl border border-gray-200 gap-1">
               <button
                 onClick={() => setCurrentTab('quick-input')}
-                className={`px-6 py-2 rounded-lg text-sm font-bold transition-all ${currentTab === 'quick-input' ? 'bg-white text-blue-600 shadow-md' : 'text-gray-500 hover:text-gray-700'}`}
+                className={`px-4 py-2 rounded-lg text-sm font-bold transition-all ${currentTab === 'quick-input' ? 'bg-white text-blue-600 shadow-md' : 'text-gray-500 hover:text-gray-700'}`}
               >
                 Симулятор
               </button>
               <button
                 onClick={() => setCurrentTab('csv-upload')}
-                className={`px-6 py-2 rounded-lg text-sm font-bold transition-all ${currentTab === 'csv-upload' ? 'bg-white text-blue-600 shadow-md' : 'text-gray-500 hover:text-gray-700'}`}
+                className={`px-4 py-2 rounded-lg text-sm font-bold transition-all ${currentTab === 'csv-upload' ? 'bg-white text-blue-600 shadow-md' : 'text-gray-500 hover:text-gray-700'}`}
               >
-                Поиск утечек выручки
+                Утечки выручки
+              </button>
+              <button
+                onClick={() => setCurrentTab('value-prop')}
+                className={`px-4 py-2 rounded-lg text-sm font-bold transition-all ${currentTab === 'value-prop' ? 'bg-white text-blue-600 shadow-md' : 'text-gray-500 hover:text-gray-700'}`}
+              >
+                Оффер-тестер
               </button>
             </nav>
           )}
@@ -50,14 +57,21 @@ function App() {
             <section className="space-y-6">
               <div className="bg-white p-8 rounded-3xl shadow-xl border border-gray-100">
                 <h2 className="text-xl font-black mb-6 flex items-center gap-3 text-gray-800 uppercase tracking-wider">
-                  {currentTab === 'quick-input' ? '📝 Параметры бизнеса' : '📁 Загрузка базы клиентов'}
+                  {currentTab === 'quick-input' && '📝 Параметры бизнеса'}
+                  {currentTab === 'csv-upload' && '📁 Загрузка базы клиентов'}
+                  {currentTab === 'value-prop' && '🎯 Тест оффера'}
                 </h2>
-                {currentTab === 'quick-input' ? <QuickInputForm /> : (
+
+                {currentTab === 'quick-input' && <QuickInputForm />}
+
+                {currentTab === 'csv-upload' && (
                   <>
                     <CSVUploader />
                     <AnomalyTable />
                   </>
                 )}
+
+                {currentTab === 'value-prop' && <ValuePropTester />}
               </div>
             </section>
 
@@ -65,10 +79,14 @@ function App() {
               <RevenueChart />
               <div className="bg-gradient-to-br from-blue-700 via-blue-600 to-indigo-800 p-8 rounded-3xl text-white shadow-2xl relative overflow-hidden">
                 <div className="absolute top-0 right-0 p-4 opacity-10 text-6xl rotate-12">📈</div>
-                <h3 className="text-xl font-black mb-3 flex items-center gap-2">Алгоритм анализа</h3>
+                <h3 className="text-xl font-black mb-3 flex items-center gap-2">
+                  {currentTab === 'value-prop' ? 'Зачем это нужно?' : 'Алгоритм анализа'}
+                </h3>
                 <p className="text-blue-50 leading-relaxed font-medium">
-                  Система находит клиентов, которые платят ниже рыночной (медианной) цены вашей компании.
-                  Мы рассчитываем «упущенную выгоду» и показываем, сколько вы заработаете при индексации цен до нормы.
+                  {currentTab === 'value-prop'
+                    ? 'Сильный оффер превращает "просто продукт" в решение конкретной боли клиента. Без этого даже идеальная воронка не будет работать.'
+                    : 'Система находит клиентов, которые платят ниже рыночной цены. Мы рассчитываем упущенную выгоду при индексации до нормы.'
+                  }
                 </p>
               </div>
             </section>

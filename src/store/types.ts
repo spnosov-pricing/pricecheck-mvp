@@ -20,7 +20,7 @@ export interface AppState {
    ltvProjection: LTVProjection | null;
 
    // UI состояние
-   currentTab: 'quick-input' | 'csv-upload' | 'templates' | 'inflation';
+   currentTab: 'quick-input' | 'csv-upload' | 'value-prop' | 'inflation'; // Добавили value-prop вместо templates
    isLoading: boolean;
    error: string | null;
 
