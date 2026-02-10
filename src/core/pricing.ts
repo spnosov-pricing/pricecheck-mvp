@@ -1,22 +1,24 @@
+// src/core/pricing.ts
 import type { PricingScenario, RevenueLiftResult, ElasticityModel } from './types';
 
 /**
- * Расчет прироста выручки при изменении цены
+ * Расчет прироста выручки и прибыли при изменении цены с учетом CAC
  */
 export const calculateRevenueLift = (
    scenario: PricingScenario,
-   elasticityModel: ElasticityModel // Теперь используется ниже
+   elasticityModel: ElasticityModel
 ): RevenueLiftResult => {
    const {
       currentPrice,
       newPrice,
       currentCustomers,
       averageChurn,
+      customerAcquisitionCost
    } = scenario;
 
    const priceChangePercent = (newPrice - currentPrice) / currentPrice;
 
-   // ИСПРАВЛЕНО: Используем elasticityModel для расчета (убирает ts6133)
+   // Расчет эластичности (потеря спроса)
    const customerLossPercent = Math.abs(priceChangePercent * elasticityModel.priceElasticity);
 
    // Учитываем базовый отток и потерю от изменения цены
@@ -25,26 +27,31 @@ export const calculateRevenueLift = (
 
    const currentAnnualRevenue = currentPrice * currentCustomers * 12;
    const newAnnualRevenue = newPrice * newCustomerCount * 12;
+
    const revenueLift = newAnnualRevenue - currentAnnualRevenue;
+
+   // Экономия на CAC при уменьшении базы (если есть отток)
+   const savedCAC = (currentCustomers - newCustomerCount) * customerAcquisitionCost;
 
    return {
       currentAnnualRevenue,
       newAnnualRevenue,
       revenueLift,
-      revenueLiftPercent: (revenueLift / currentAnnualRevenue) * 100,
+      revenueLiftPercent: currentAnnualRevenue > 0 ? (revenueLift / currentAnnualRevenue) * 100 : 0,
       customerChurnImpact: currentCustomers - newCustomerCount,
       netGain: revenueLift > 0 ? revenueLift : 0,
       breakEvenCustomers: currentAnnualRevenue / (newPrice * 12),
+      netProfitImpact: revenueLift + savedCAC
    };
 };
 
 /**
- * Расчет оптимальной цены
+ * Расчет оптимальной цены (то, чего не хватало)
  */
 export const findOptimalPrice = (
    basePrice: number,
    currentCustomers: number,
-   priceElasticity: number, // Теперь используется ниже (убирает ts6133)
+   priceElasticity: number,
    priceRange: { min: number; max: number } = { min: basePrice * 0.5, max: basePrice * 2 }
 ): { optimalPrice: number; maxRevenue: number } => {
    let maxRevenue = 0;
@@ -54,7 +61,6 @@ export const findOptimalPrice = (
 
    for (let price = priceRange.min; price <= priceRange.max; price += step) {
       const priceChangePercent = (price - basePrice) / basePrice;
-      // ИСПРАВЛЕНО: Используем priceElasticity в расчете
       const demandDrop = Math.abs(priceChangePercent * priceElasticity);
       const revenue = price * (currentCustomers * (1 - demandDrop)) * 12;
 
@@ -74,6 +80,5 @@ export const compareScenarios = (
    scenarios: PricingScenario[],
    elasticityModel: ElasticityModel
 ): RevenueLiftResult[] => {
-   // ИСПРАВЛЕНО: Теперь elasticityModel передается корректно (убирает красную ошибку ts2304)
    return scenarios.map((scenario) => calculateRevenueLift(scenario, elasticityModel));
 };

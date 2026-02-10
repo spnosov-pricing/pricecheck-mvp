@@ -1,35 +1,36 @@
 import { create } from 'zustand';
-import type { AppState } from './types';
+import type { RevenueLiftResult, PricingData, CSVAnalysisResult, CSVRow, PricingPlaybook } from '../core/types';
+
+interface AppState {
+   currentTab: string;
+   setCurrentTab: (tab: string) => void;
+   quickInputData: any | null;
+   setQuickInputData: (data: any) => void;
+   revenueLiftResults: RevenueLiftResult | null;
+   setRevenueLiftResults: (results: RevenueLiftResult) => void;
+   csvData: CSVRow[] | null;
+   setCSVData: (data: CSVRow[]) => void;
+   csvAnalysis: CSVAnalysisResult | null;
+   setCSVAnalysis: (analysis: CSVAnalysisResult) => void;
+   selectedPlaybook: PricingPlaybook | null;
+   setSelectedPlaybook: (p: PricingPlaybook | null) => void;
+   inflationSector: string;
+   inflationRegion: string;
+}
 
 export const useAppStore = create<AppState>((set) => ({
-   quickInputData: null,
-   csvData: null,
-   csvAnalysis: null,
-   revenueLiftResults: null,
-   inflationImpact: null,
-   ltvProjection: null,
    currentTab: 'quick-input',
-   isLoading: false,
-   error: null,
-
-   setQuickInputData: (data) => set({ quickInputData: data }),
-   setCSVData: (data) => set({ csvData: data }),
-   setCSVAnalysis: (analysis) => set({ csvAnalysis: analysis }),
-   setRevenueLiftResults: (results) => set({ revenueLiftResults: results }),
-   setInflationImpact: (impact) => set({ inflationImpact: impact }),
-   setLTVProjection: (projection) => set({ ltvProjection: projection }),
    setCurrentTab: (tab) => set({ currentTab: tab }),
-   setLoading: (loading) => set({ isLoading: loading }),
-   setError: (error) => set({ error }),
-
-   reset: () =>
-      set({
-         quickInputData: null,
-         csvData: null,
-         csvAnalysis: null,
-         revenueLiftResults: null,
-         inflationImpact: null,
-         ltvProjection: null,
-         error: null,
-      }),
+   quickInputData: null,
+   setQuickInputData: (data) => set({ quickInputData: data }),
+   revenueLiftResults: null,
+   setRevenueLiftResults: (results) => set({ revenueLiftResults: results }),
+   csvData: null,
+   setCSVData: (data) => set({ csvData: data }),
+   csvAnalysis: null,
+   setCSVAnalysis: (analysis) => set({ csvAnalysis: analysis }),
+   selectedPlaybook: null,
+   setSelectedPlaybook: (p) => set({ selectedPlaybook: p }),
+   inflationSector: 'Technology',
+   inflationRegion: 'RU',
 }));

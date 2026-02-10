@@ -2,6 +2,8 @@
 import React, { useState } from 'react';
 import { useAppStore } from '../../store/appStore';
 import { PaywallModal } from './PaywallModal';
+// Импортируем тип аномалии для устранения ошибок типизации
+import type { AnomalyData } from '../../csv/types';
 
 export const AnomalyTable: React.FC = () => {
    const { csvAnalysis } = useAppStore();
@@ -44,7 +46,8 @@ export const AnomalyTable: React.FC = () => {
                   </tr>
                </thead>
                <tbody className="divide-y divide-gray-100">
-                  {csvAnalysis.anomalies.slice(0, 5).map((anomaly, idx) => (
+                  {/* Явно указываем типы для anomaly и idx */}
+                  {csvAnalysis.anomalies.slice(0, 5).map((anomaly: AnomalyData, idx: number) => (
                      <tr key={idx} className="hover:bg-gray-50 transition-colors">
                         <td className="px-6 py-4 font-medium text-gray-900">{anomaly.customerName}</td>
                         <td className="px-6 py-4">{formatCurrency(anomaly.currentPrice)}</td>
@@ -63,7 +66,10 @@ export const AnomalyTable: React.FC = () => {
             </table>
             {csvAnalysis.anomalies.length > 5 && (
                <div className="p-4 bg-gray-50 text-center border-t border-gray-100">
-                  <button onClick={() => setShowPaywall(true)} className="text-blue-600 font-bold text-xs hover:underline uppercase tracking-widest">
+                  <button
+                     onClick={() => setShowPaywall(true)}
+                     className="text-blue-600 font-bold text-xs hover:underline uppercase tracking-widest"
+                  >
                      Показать еще {csvAnalysis.anomalies.length - 5} аномалий
                   </button>
                </div>

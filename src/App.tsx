@@ -1,17 +1,58 @@
 // src/App.tsx
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { QuickInputForm } from './components/Forms/QuickInputForm';
 import { CSVUploader } from './components/Forms/CSVUploader';
 import { RevenueChart } from './components/Results/RevenueChart';
 import { AnomalyTable } from './components/Results/AnomalyTable';
-import { ValuePropTester } from './components/Forms/ValuePropTester'; // Новый импорт
+import { ValuePropTester } from './components/Forms/ValuePropTester';
+import { PlaybookSelector } from './components/Playbooks/PlaybookSelector';
+import { ExportSection } from './components/Results/ExportSection';
 import { useAppStore } from './store/appStore';
 import { DiagnosticQuiz } from './components/Quiz/DiagnosticQuiz';
+import { suggestPriceAdjustment } from './core/inflation';
+import type { ReportData } from './core/types'; // Добавлено слово type
 
 function App() {
-  const { currentTab, setCurrentTab } = useAppStore();
+  const {
+    currentTab,
+    setCurrentTab,
+    quickInputData,
+    selectedPlaybook,
+    inflationSector,
+    inflationRegion
+  } = useAppStore();
+
   // По умолчанию false, чтобы пользователь сначала увидел квиз
   const [isDiagnosed, setIsDiagnosed] = useState(false);
+
+  // Подготовка данных для PDF-отчета на основе состояния стора
+  const reportData = useMemo((): ReportData | null => {
+    if (!quickInputData) return null;
+
+    const adjustment = suggestPriceAdjustment(
+      quickInputData.currentPrice,
+      quickInputData.lastUpdateDate,
+      inflationSector,
+      inflationRegion
+    );
+
+    return {
+      brandName: "My Business", // Здесь можно добавить поле в стор для названия
+      currentPricing: {
+        price: quickInputData.currentPrice,
+        currency: quickInputData.currency || '$',
+        lastUpdate: quickInputData.lastUpdateDate,
+      },
+      recommendedPricing: {
+        price: adjustment.suggestedPrice,
+        adjustmentReason: adjustment.reasoning,
+        inflationImpact: adjustment.adjustmentPercentage,
+      },
+      selectedPlaybook: selectedPlaybook || undefined,
+      comparisonChart: { competitors: [] }, // Для расширения в v2
+      generatedDate: new Date(),
+    };
+  }, [quickInputData, selectedPlaybook, inflationSector, inflationRegion]);
 
   return (
     <div className="min-h-screen bg-gray-50 text-gray-900 pb-20 font-sans">
@@ -23,27 +64,23 @@ function App() {
             <span className="ml-2 bg-amber-100 text-amber-700 text-[10px] font-black px-2 py-0.5 rounded-md uppercase tracking-tighter shadow-sm border border-amber-200">PRO</span>
           </div>
 
-          {/* Навигация скрыта до завершения диагностики */}
           {isDiagnosed && (
-            <nav className="flex bg-gray-100 p-1 rounded-xl border border-gray-200 gap-1">
-              <button
-                onClick={() => setCurrentTab('quick-input')}
-                className={`px-4 py-2 rounded-lg text-sm font-bold transition-all ${currentTab === 'quick-input' ? 'bg-white text-blue-600 shadow-md' : 'text-gray-500 hover:text-gray-700'}`}
-              >
-                Симулятор
-              </button>
-              <button
-                onClick={() => setCurrentTab('csv-upload')}
-                className={`px-4 py-2 rounded-lg text-sm font-bold transition-all ${currentTab === 'csv-upload' ? 'bg-white text-blue-600 shadow-md' : 'text-gray-500 hover:text-gray-700'}`}
-              >
-                Утечки выручки
-              </button>
-              <button
-                onClick={() => setCurrentTab('value-prop')}
-                className={`px-4 py-2 rounded-lg text-sm font-bold transition-all ${currentTab === 'value-prop' ? 'bg-white text-blue-600 shadow-md' : 'text-gray-500 hover:text-gray-700'}`}
-              >
-                Оффер-тестер
-              </button>
+            <nav className="hidden md:flex bg-gray-100 p-1 rounded-xl border border-gray-200 gap-1">
+              {[
+                { id: 'quick-input', label: 'Симулятор' },
+                { id: 'csv-upload', label: 'Утечки' },
+                { id: 'playbooks', label: 'Стратегии' },
+                { id: 'value-prop', label: 'Оффер' }
+              ].map((tab) => (
+                <button
+                  key={tab.id}
+                  onClick={() => setCurrentTab(tab.id)}
+                  className={`px-4 py-2 rounded-lg text-sm font-bold transition-all ${currentTab === tab.id ? 'bg-white text-blue-600 shadow-md' : 'text-gray-500 hover:text-gray-700'
+                    }`}
+                >
+                  {tab.label}
+                </button>
+              ))}
             </nav>
           )}
         </div>
@@ -53,43 +90,67 @@ function App() {
         {!isDiagnosed ? (
           <DiagnosticQuiz onComplete={() => setIsDiagnosed(true)} />
         ) : (
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-start animate-in fade-in duration-700">
-            <section className="space-y-6">
-              <div className="bg-white p-8 rounded-3xl shadow-xl border border-gray-100">
-                <h2 className="text-xl font-black mb-6 flex items-center gap-3 text-gray-800 uppercase tracking-wider">
-                  {currentTab === 'quick-input' && '📝 Параметры бизнеса'}
-                  {currentTab === 'csv-upload' && '📁 Загрузка базы клиентов'}
-                  {currentTab === 'value-prop' && '🎯 Тест оффера'}
-                </h2>
+          <div className="space-y-12 animate-in fade-in duration-700">
 
-                {currentTab === 'quick-input' && <QuickInputForm />}
+            {/* Основная рабочая область */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-start">
+              <section className="space-y-6">
+                <div className="bg-white p-8 rounded-3xl shadow-xl border border-gray-100">
+                  <h2 className="text-xl font-black mb-6 flex items-center gap-3 text-gray-800 uppercase tracking-wider">
+                    {currentTab === 'quick-input' && '📝 Параметры бизнеса'}
+                    {currentTab === 'csv-upload' && '📁 Загрузка базы клиентов'}
+                    {currentTab === 'playbooks' && '📚 Выбор плейбука'}
+                    {currentTab === 'value-prop' && '🎯 Тест оффера'}
+                  </h2>
 
-                {currentTab === 'csv-upload' && (
-                  <>
-                    <CSVUploader />
-                    <AnomalyTable />
-                  </>
+                  {currentTab === 'quick-input' && <QuickInputForm />}
+                  {currentTab === 'csv-upload' && (
+                    <>
+                      <CSVUploader />
+                      <AnomalyTable />
+                    </>
+                  )}
+                  {currentTab === 'playbooks' && <PlaybookSelector />}
+                  {currentTab === 'value-prop' && <ValuePropTester />}
+                </div>
+              </section>
+
+              <section className="space-y-6 lg:sticky lg:top-28">
+                <RevenueChart />
+
+                {/* Виджет инфляции (появляется если введены данные) */}
+                {quickInputData && (
+                  <div className="bg-white p-6 rounded-3xl border-2 border-amber-100 shadow-sm">
+                    <h3 className="text-lg font-bold text-gray-900 mb-2 flex items-center gap-2">
+                      <span>🛡️</span> Inflation Guard
+                    </h3>
+                    <p className="text-sm text-gray-600 mb-4">
+                      {suggestPriceAdjustment(quickInputData.currentPrice, quickInputData.lastUpdateDate).reasoning}
+                    </p>
+                  </div>
                 )}
 
-                {currentTab === 'value-prop' && <ValuePropTester />}
-              </div>
-            </section>
+                <div className="bg-gradient-to-br from-blue-700 via-blue-600 to-indigo-800 p-8 rounded-3xl text-white shadow-2xl relative overflow-hidden">
+                  <div className="absolute top-0 right-0 p-4 opacity-10 text-6xl rotate-12">📈</div>
+                  <h3 className="text-xl font-black mb-3 flex items-center gap-2">
+                    Аналитическая справка
+                  </h3>
+                  <p className="text-blue-50 leading-relaxed font-medium">
+                    {currentTab === 'playbooks'
+                      ? 'Плейбуки разработаны на основе методологий McKinsey и Bain для оптимизации структуры доходов в разных бизнес-моделях.'
+                      : 'Система находит клиентов, которые платят ниже рыночной цены. Мы рассчитываем упущенную выгоду при индексации до нормы.'
+                    }
+                  </p>
+                </div>
+              </section>
+            </div>
 
-            <section className="space-y-6 lg:sticky lg:top-28">
-              <RevenueChart />
-              <div className="bg-gradient-to-br from-blue-700 via-blue-600 to-indigo-800 p-8 rounded-3xl text-white shadow-2xl relative overflow-hidden">
-                <div className="absolute top-0 right-0 p-4 opacity-10 text-6xl rotate-12">📈</div>
-                <h3 className="text-xl font-black mb-3 flex items-center gap-2">
-                  {currentTab === 'value-prop' ? 'Зачем это нужно?' : 'Алгоритм анализа'}
-                </h3>
-                <p className="text-blue-50 leading-relaxed font-medium">
-                  {currentTab === 'value-prop'
-                    ? 'Сильный оффер превращает "просто продукт" в решение конкретной боли клиента. Без этого даже идеальная воронка не будет работать.'
-                    : 'Система находит клиентов, которые платят ниже рыночной цены. Мы рассчитываем упущенную выгоду при индексации до нормы.'
-                  }
-                </p>
-              </div>
-            </section>
+            {/* Секция экспорта (появляется когда есть данные для отчета) */}
+            {reportData && (
+              <section className="pt-12 border-t border-gray-200">
+                <ExportSection reportData={reportData} isPremium={false} />
+              </section>
+            )}
           </div>
         )}
       </main>
